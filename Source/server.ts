@@ -23,5 +23,5 @@ fs
 		const pull: RouterExport = pseudoPull.default;
 
 		app.use(`/${pull.name}`, pull.router);
-		Logger.info("server/routers", `Loading routes from router on /${pull.name}`);
+		Logger.info("server/routers", `Loading routes from router on /${pull.name}...`);
 	});
