@@ -1,3 +1,4 @@
 {
-	"workbench.colorTheme": "Horizon Dark"
+	"workbench.colorTheme": "Horizon Light",
+	"editor.fontFamily": "'Jetbrains Mono', 'Fira Code', 'Cascadia Code PL'"
 }

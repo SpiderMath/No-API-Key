@@ -4,8 +4,6 @@ import LoadRoutes from "../Helpers/LoadRoutes";
 
 const ImageRouter = Router();
 
-ImageRouter.get("/", (req, res) => res.send("e"));
-
 const configuration: RouterExport = {
 	router: ImageRouter,
 	name: "image",
