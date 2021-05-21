@@ -147,8 +147,30 @@ TextRouter
 				);
 			})
 			.join("\n");
-		return res.status(200).send({ response: text });
+		return res
+			.status(200)
+			.send({ response: text });
 	});
+
+/**
+ * @swagger
+ * /pp:
+ *   get:
+ *     description: Gets the length of PP of a person
+ *     tags: [Text]
+ *     responses:
+ *       200:
+ *         description: Success
+ *       400:
+ *         description: Error
+ */
+TextRouter.get("/pp", (req, res) => {
+	res
+		.status(200)
+		.send({
+			response: `8${"=".repeat(Math.floor(Math.random() * 11))}D`,
+		});
+});
 
 const configuration: RouterExport = {
 	name: "text",
