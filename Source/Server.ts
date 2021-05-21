@@ -1,4 +1,4 @@
 import App from "./Classes/App";
 
 new App()
-	.start(3000);
+	.start(6969);
