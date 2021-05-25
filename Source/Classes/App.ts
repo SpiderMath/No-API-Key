@@ -7,6 +7,7 @@ import { Collection } from "../Packages/Collection";
 import { v4 } from "uuid";
 import { join } from "path";
 import Subdomain from "../Packages/Subdomain";
+import { stripIndents } from "common-tags";
 export default class App {
 	private main = express();
 	public logger = Logger;
@@ -21,6 +22,8 @@ export default class App {
 
 		this._loadRoutes();
 		writeFileSync(".env", `ADMINTOKEN=${this.adminKey}`);
+
+		this._loadDocumentation();
 	}
 
 	private _loadRoutes() {
@@ -42,6 +45,9 @@ export default class App {
 					const pull: RouteExport = pseudoPull.default;
 
 					if(!pull.type) pull.type = "get";
+
+					pull.mainEndpoint = endpointPath;
+
 					this.routes.set(`/${endpointPath.toLowerCase()}/${pull.name.toLowerCase()}`, pull);
 
 					this.main[pull.type](`/${endpointPath.toLowerCase()}/${pull.name.toLowerCase()}`, (req, res) => {
@@ -136,5 +142,31 @@ export default class App {
 			.status(200)
 			.set({ "Content-Type": "image/png" })
 			.send(imageBuffer);
+	}
+
+	private _loadDocumentation() {
+		const DocsRouter = Router();
+
+		Subdomain("docs", DocsRouter);
+		this.main.use(DocsRouter);
+
+		const template = (route: RouteExport) => stripIndents`
+			<li>
+				<b>${`/${route.mainEndpoint}/${route.name}`}</b><br>
+				<b>Description:</b> ${route.description}<br>
+				<b>Type:</b> ${route.type || "get"}<br>
+				<b>Admin:</b> ${route.admin ? "✅" : "❌"}<br>
+			</li>
+		`;
+
+		DocsRouter
+			.get("/", (req, res) => {
+				const resp = this.routes.map(route => template(route));
+
+				res
+					.send(
+						resp.join("\n"),
+					);
+			});
 	}
 };
