@@ -5,7 +5,7 @@ interface RouteExport {
 	name: string,
 	description: string,
 	parameters: Parameter[],
-	admin: true | false,
+	admin?: true | false,
 	type?: "get" | "post" | "put" | "delete",
 	run: RunFunction,
 };
