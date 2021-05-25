@@ -12,7 +12,7 @@ interface RouteExport {
 interface Parameter {
 	name: string,
 	description: string,
-	type: string,
+	type: "string" | "number" | "boolean",
 	required: boolean,
 };
 

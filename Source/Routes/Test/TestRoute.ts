@@ -3,7 +3,12 @@ import RouteExport from "../../Constants/RouteExport";
 const TestRoute: RouteExport = {
 	name: "test",
 	description: "This is a test route",
-	parameters: [],
+	parameters: [{
+		name: "param",
+		description: "parameter for test",
+		required: true,
+		type: "boolean",
+	}],
 	async run(req, res, app) {
 		console.log(app.routes.random());
 

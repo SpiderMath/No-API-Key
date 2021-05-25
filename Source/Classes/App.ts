@@ -40,7 +40,57 @@ export default class App {
 					if(!pull.type) pull.type = "get";
 					this.routes.set(`/${endpointPath.toLowerCase()}/${pull.name.toLowerCase()}`, pull);
 
-					this.main[pull.type](`/${endpointPath.toLowerCase()}/${pull.name.toLowerCase()}`, (req, res) => pull.run(req, res, this));
+					this.main[pull.type](`/${endpointPath.toLowerCase()}/${pull.name.toLowerCase()}`, (req, res) => {
+						const requiredFields = pull.parameters.filter(param => param.required);
+
+						for(const param of requiredFields) {
+							let query: any = req.query[param.name];
+
+							if(!query) {
+								return res
+									.status(400)
+									.send({
+										error: true,
+										reason: `${param.name} is not provided. [Parameter Type: ${param.type}]`,
+									});
+							}
+
+							if(param.type === "number") query = Number(query);
+
+							if(param.type === "boolean") {
+								if(query.toLowerCase() === "true") { query = true; }
+								else if(query.toLowerCase() === "false") { query = false; }
+								else {
+									return res
+										.status(400)
+										.send({
+											error: true,
+											reason: `Invalid parameter type for ${param.name}`,
+										});
+								}
+							}
+
+							if(!query) {
+								return res
+									.status(400)
+									.send({
+										error: true,
+										reason: `Invalid parameter type for ${param.name}`,
+									});
+							}
+
+							if(typeof query !== param.type) {
+								return res
+									.status(400)
+									.send({
+										error: true,
+										reason: `Expected ${param.name} to be type ${param.type}, received ${typeof query}`,
+									});
+							}
+						}
+
+						pull.run(req, res, this);
+					});
 
 					this.logger.success("server/routes", `Loaded route /${endpointPath.toLowerCase()}/${pull.name.toLowerCase()} successfully!`);
 				}
