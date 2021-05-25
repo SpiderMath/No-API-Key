@@ -1,5 +1,5 @@
 import express from "express";
-import { readdirSync, writeFileSync } from "fs";
+import { readdirSync } from "fs";
 import Logger from "../Helpers/Logger";
 import { DirectoryMap } from "../Config/DirectoryMap";
 import RouteExport from "../Constants/RouteExport";
@@ -20,8 +20,6 @@ export default class App {
 		this.main.listen(this.port, () => this.logger.success("server", `Listening for API Calls on port: ${port}!`));
 
 		this._loadRoutes();
-
-		writeFileSync(".env", `ADMIN_KEY=${this.adminKey}`);
 	}
 
 	private _loadRoutes() {
@@ -76,15 +74,6 @@ export default class App {
 									.send({
 										error: true,
 										reason: `Invalid parameter type for ${param.name}`,
-									});
-							}
-
-							if(typeof query !== param.type) {
-								return res
-									.status(400)
-									.send({
-										error: true,
-										reason: `Expected ${param.name} to be type ${param.type}, received ${typeof query}`,
 									});
 							}
 						}
