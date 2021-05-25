@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Response } from "express";
 import { readdirSync, writeFileSync } from "fs";
 import Logger from "../Helpers/Logger";
 import { DirectoryMap } from "../Config/DirectoryMap";
@@ -106,5 +106,30 @@ export default class App {
 					this.logger.success("server/routes", `Loaded route /${endpointPath.toLowerCase()}/${pull.name.toLowerCase()} successfully!`);
 				}
 			});
+	}
+
+	public errorRes(res: Response, error: string, code: number = 400) {
+		return res
+			.status(code)
+			.send({
+				error: true,
+				reason: error,
+			});
+	}
+
+	public successResJSON(res: Response, json: object) {
+		return res
+			.status(200)
+			.send({
+				data: json,
+				error: false,
+			});
+	}
+
+	public successResImage(res: Response, imageBuffer: Buffer) {
+		return res
+			.status(200)
+			.set({ "Content-Type": "image/png" })
+			.send(imageBuffer);
 	}
 };
