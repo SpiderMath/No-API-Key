@@ -1,4 +1,4 @@
-import express, { Response } from "express";
+import express, { Response, Router } from "express";
 import { readdirSync, writeFileSync } from "fs";
 import Logger from "../Helpers/Logger";
 import { DirectoryMap } from "../Config/DirectoryMap";
@@ -6,7 +6,7 @@ import RouteExport from "../Constants/RouteExport";
 import { Collection } from "../Packages/Collection";
 import { v4 } from "uuid";
 import { join } from "path";
-
+import Subdomain from "../Packages/Subdomain";
 export default class App {
 	private main = express();
 	public logger = Logger;
@@ -24,6 +24,11 @@ export default class App {
 	}
 
 	private _loadRoutes() {
+		const APIRouter = Router();
+		Subdomain("api", APIRouter);
+
+		this.main.use(APIRouter);
+
 		readdirSync(join(__dirname, "../Routes"))
 			.forEach(async (dir: string) => {
 				const files = readdirSync(join(__dirname, `../Routes/${dir}`));
