@@ -10,9 +10,7 @@ const TestRoute: RouteExport = {
 		type: "boolean",
 	}],
 	admin: true,
-	async run(req, res, app) {
-		console.log(app.routes.random());
-
+	async run(req, res) {
 		res.send("Working!");
 	},
 	type: "get",
