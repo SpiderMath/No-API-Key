@@ -1,4 +1,9 @@
 {
 	"workbench.colorTheme": "Community Material Theme Darker High Contrast",
-	"editor.fontFamily": "'Cascadia Code PL', 'Fira Code'"
+	"editor.fontFamily": "'Cascadia Code PL', 'Fira Code'",
+	"powermode.enabled": true,
+	"powermode.enableShake": false,
+	"powermode.enableExplosions": true,
+	"powermode.enableStatusBarComboTimer": false,
+	"powermode.presets": "particles",
 }
