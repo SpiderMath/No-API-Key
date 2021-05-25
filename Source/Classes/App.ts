@@ -1,5 +1,5 @@
 import express from "express";
-import { readdirSync } from "fs";
+import { readdirSync, writeFileSync } from "fs";
 import Logger from "../Helpers/Logger";
 import { DirectoryMap } from "../Config/DirectoryMap";
 import RouteExport from "../Constants/RouteExport";
@@ -20,6 +20,7 @@ export default class App {
 		this.main.listen(this.port, () => this.logger.success("server", `Listening for API Calls on port: ${port}!`));
 
 		this._loadRoutes();
+		writeFileSync(".env", `ADMINTOKEN=${this.adminKey}`);
 	}
 
 	private _loadRoutes() {
@@ -39,6 +40,27 @@ export default class App {
 					this.routes.set(`/${endpointPath.toLowerCase()}/${pull.name.toLowerCase()}`, pull);
 
 					this.main[pull.type](`/${endpointPath.toLowerCase()}/${pull.name.toLowerCase()}`, (req, res) => {
+
+						if(pull.admin) {
+							if(!req.query.token) {
+								return res
+									.status(403)
+									.send({
+										error: true,
+										reason: "token not provided",
+									});
+							}
+
+							if(req.query.token !== this.adminKey) {
+								return res
+									.status(403)
+									.send({
+										error: true,
+										reason: "Invalid token provided",
+									});
+							}
+						}
+
 						const requiredFields = pull.parameters.filter(param => param.required);
 
 						for(const param of requiredFields) {
