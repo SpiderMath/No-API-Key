@@ -150,7 +150,34 @@ export default class App {
 		const DocsRouter = Router();
 
 		Subdomain("docs", DocsRouter);
-		this.main.use(DocsRouter);
 
+		DocsRouter
+			.get("/", (req, res) => {
+				res
+					.send({
+						res: "Working? I guess so lel",
+					});
+			});
+
+		DocsRouter
+			.get("/:cat", (req, res) => {
+				const category = req.params.cat;
+
+				const routes = this.routes.filter(route => route.mainEndpoint?.toLowerCase() === category.toLowerCase()).map(route => {
+					const val = {
+						name: route.name,
+						description: route.description,
+						parameters: route.parameters,
+						adminOnly: route.admin,
+						type: route.type,
+						category: route.mainEndpoint,
+					};
+
+					return val;
+				});
+
+				return this.successResJSON(res, routes);
+			});
+		this.main.use(DocsRouter);
 	}
 };
