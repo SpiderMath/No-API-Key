@@ -1,40 +1,42 @@
-import { Request, Router, Response } from "express";
-
 // @ts-ignore
-function match(subdomains, offset) {
+export default function Subdomain(subdomain, fn) {
+	if(!subdomain || typeof subdomain !== "string") {
+	  throw new Error("The first parameter must be a string representing the subdomain");
+	}
+
+	// check fn handles three params..
+	if(!fn || typeof fn !== "function" || fn.length < 3) {
+		throw new Error("The second parameter must be a function that handles fn(req, res, next) params.");
+	}
+
 	// @ts-ignore
-	return function(item, index) {
-	  return (item === "*" && !!subdomains[index + offset])
-		|| subdomains[index + offset] === item;
-	};
-}
+	return function(req, res, next) {
+	  req._subdomainLevel = req._subdomainLevel || 0;
 
-/**
-   * Subdomain router
-   *
-   * @param {String} subdomain
-   * @param {Function} fn, middleware, router
-   * @return {Function} middleware
-   */
+	  const subdomainSplit = subdomain.split(".");
+	  const len = subdomainSplit.length;
+	  let match = true;
 
-export default function(subdomain: string, fn: Router) {
-	return function(req: Request, res: Response, next: any) {
+	  // url - v2.api.example.dom
+	  // subdomains == ['api', 'v2']
+	  // subdomainSplit = ['v2', 'api']
+	  for(let i = 0; i < len; i++) {
+			const expected = subdomainSplit[len - (i + 1)];
+			const actual = req.subdomains[i + req._subdomainLevel];
 
-	  // keep track of matched subdomains (allows nested router)
-	  // @ts-ignore
-	  req._subdomainsMatched = req._subdomainsMatched || 0;
+			if(expected === "*") { continue; }
 
-	  const parts = subdomain.split(".").reverse();
+			if(actual !== expected) {
+				match = false;
+				break;
+			}
+	  }
 
-	  // route
-		// @ts-ignore
-		if (parts.every(match(req.subdomains, req._subdomainsMatched))) {
-			// @ts-ignore
-			req._subdomainsMatched += parts.length;
+	  if(match) {
+			req._subdomainLevel++;
 			return fn(req, res, next);
 	  }
-		else {
-			next();
-	  }
+	  next();
 	};
+
 };

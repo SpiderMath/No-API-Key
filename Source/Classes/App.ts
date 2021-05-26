@@ -6,8 +6,9 @@ import RouteExport from "../Constants/RouteExport";
 import { Collection } from "../Packages/Collection";
 import { v4 } from "uuid";
 import { join } from "path";
-import Subdomain from "../Packages/Subdomain";
 import { stripIndents } from "common-tags";
+import firstUppercase from "../Helpers/FirstUppercase";
+import Subdomain from "../Packages/Subdomain";
 
 export default class App {
 	private main = express();
@@ -31,6 +32,7 @@ export default class App {
 
 	private _loadRoutes() {
 		const APIRouter = Router();
+
 		Subdomain("api", APIRouter);
 
 		this.main.use(APIRouter);
@@ -53,8 +55,7 @@ export default class App {
 
 					this.routes.set(`/${endpointPath.toLowerCase()}/${pull.name.toLowerCase()}`, pull);
 
-					this.main[pull.type](`/${endpointPath.toLowerCase()}/${pull.name.toLowerCase()}`, (req, res) => {
-
+					APIRouter[pull.type](`/${endpointPath.toLowerCase()}/${pull.name.toLowerCase()}`, async (req, res) => {
 						if(pull.admin) {
 							if(!req.query.token) {
 								return res
@@ -114,7 +115,7 @@ export default class App {
 							}
 						}
 
-						pull.run(req, res, this);
+						await pull.run(req, res, this);
 					});
 
 					this.logger.success("server/routes", `Loaded route /${endpointPath.toLowerCase()}/${pull.name.toLowerCase()} successfully!`);
@@ -134,6 +135,7 @@ export default class App {
 	public successResJSON(res: Response, json: object) {
 		return res
 			.status(200)
+			.set({ "Content-Type": "application/json" })
 			.send({
 				data: json,
 				error: false,
@@ -152,6 +154,7 @@ export default class App {
 
 		Subdomain("docs", DocsRouter);
 
+		this.main.use("/docs", DocsRouter);
 		DocsRouter
 			.get("/", (req, res) => {
 				const categoryList = this.routes.map(route => route.category).filter((elem, pos, self) => self.indexOf(elem) === pos);
@@ -160,7 +163,7 @@ export default class App {
 					.send(
 						stripIndents`
 							Click on the following links to get documentation on the each of the categories of endpoints<hr>
-							${categoryList.map(cat => `<a href=http://api.${this.baseURL}/${cat}> ${cat} </a>`).join("<hr>")}
+							${categoryList.map(cat => `<a href=http://api.${this.baseURL}/${cat}> ${firstUppercase(cat || "")} </a>`).join("<hr>")}
 						`);
 			});
 
@@ -168,7 +171,7 @@ export default class App {
 			.get("/:cat", (req, res) => {
 				const category = req.params.cat;
 
-				const routes = this.routes.filter(route => route.category?.toLowerCase() === category.toLowerCase()).array();
+				const routes = this.routes.filter(route => route.category?.toLowerCase() === category.toLowerCase()).map(route => { return { name: route.name, docsURL: `http://docs.${this.baseURL}/${category}/${route.name}` }; });
 
 				return this.successResJSON(res, routes);
 			});
@@ -185,6 +188,5 @@ export default class App {
 				return this
 					.successResJSON(res, reqRoute);
 			});
-		this.main.use(DocsRouter);
 	}
 };
