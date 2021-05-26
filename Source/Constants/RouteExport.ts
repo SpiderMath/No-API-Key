@@ -8,7 +8,7 @@ interface RouteExport {
 	admin?: true | false,
 	type?: "get" | "post" | "put" | "delete",
 	run: RunFunction,
-	mainEndpoint?: string,
+	category?: string,
 };
 
 interface Parameter {

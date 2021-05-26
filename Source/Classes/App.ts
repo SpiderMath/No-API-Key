@@ -48,7 +48,7 @@ export default class App {
 
 					if(!pull.type) pull.type = "get";
 
-					pull.mainEndpoint = endpointPath;
+					pull.category = endpointPath;
 
 					this.routes.set(`/${endpointPath.toLowerCase()}/${pull.name.toLowerCase()}`, pull);
 
@@ -163,18 +163,7 @@ export default class App {
 			.get("/:cat", (req, res) => {
 				const category = req.params.cat;
 
-				const routes = this.routes.filter(route => route.mainEndpoint?.toLowerCase() === category.toLowerCase()).map(route => {
-					const val = {
-						name: route.name,
-						description: route.description,
-						parameters: route.parameters,
-						adminOnly: route.admin,
-						type: route.type,
-						category: route.mainEndpoint,
-					};
-
-					return val;
-				});
+				const routes = this.routes.filter(route => route.category?.toLowerCase() === category.toLowerCase()).array();
 
 				return this.successResJSON(res, routes);
 			});
@@ -184,7 +173,7 @@ export default class App {
 				const name = req.params.name;
 				const category = req.params.cat;
 
-				const reqRoute = this.routes.filter(route => route.mainEndpoint?.toLowerCase() === category.toLowerCase()).filter(route => route.name === name.toLowerCase()).array()[0];
+				const reqRoute = this.routes.filter(route => route.category?.toLowerCase() === category.toLowerCase()).filter(route => route.name === name.toLowerCase()).array()[0];
 
 				if(!reqRoute) return this.errorRes(res, `Route with /${category}/${name} not found!`);
 
