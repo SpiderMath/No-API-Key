@@ -7,6 +7,7 @@ import { Collection } from "../Packages/Collection";
 import { v4 } from "uuid";
 import { join } from "path";
 import Subdomain from "../Packages/Subdomain";
+import { stripIndents } from "common-tags";
 
 export default class App {
 	private main = express();
@@ -153,10 +154,14 @@ export default class App {
 
 		DocsRouter
 			.get("/", (req, res) => {
+				const categoryList = this.routes.map(route => route.category).filter((elem, pos, self) => self.indexOf(elem) === pos);
+
 				res
-					.send({
-						res: "Working? I guess so lel",
-					});
+					.send(
+						stripIndents`
+							Click on the following links to get documentation on the each of the categories of endpoints<hr>
+							${categoryList.map(cat => `<a href=http://api.${this.baseURL}/${cat}> ${cat} </a>`).join("<hr>")}
+						`);
 			});
 
 		DocsRouter
