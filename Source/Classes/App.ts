@@ -178,6 +178,19 @@ export default class App {
 
 				return this.successResJSON(res, routes);
 			});
+
+		DocsRouter
+			.get("/:cat/:name", (req, res) => {
+				const name = req.params.name;
+				const category = req.params.cat;
+
+				const reqRoute = this.routes.filter(route => route.mainEndpoint?.toLowerCase() === category.toLowerCase()).filter(route => route.name === name.toLowerCase()).array()[0];
+
+				if(!reqRoute) return this.errorRes(res, `Route with /${category}/${name} not found!`);
+
+				return this
+					.successResJSON(res, reqRoute);
+			});
 		this.main.use(DocsRouter);
 	}
 };
