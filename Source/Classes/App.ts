@@ -8,7 +8,7 @@ import { v4 } from "uuid";
 import { join } from "path";
 import { stripIndents } from "common-tags";
 import firstUppercase from "../Helpers/FirstUppercase";
-
+import Subdomain from "../Packages/Subdomain";
 export default class App {
 	private main = express();
 	public logger = Logger;
@@ -27,20 +27,12 @@ export default class App {
 		writeFileSync(".env", `ADMINTOKEN=${this.adminKey}`);
 
 		this._loadDocumentation();
-		this._loadTrash();
-	}
-
-	// Totally proper correct method name xD
-	private _loadTrash() {
-		this.main.get("/", (req, res) => res.redirect("/docs"));
 	}
 
 	private _loadRoutes() {
 		const APIRouter = Router();
 
-		// Subdomain("api", APIRouter);
-
-		this.main.use(APIRouter);
+		Subdomain("api", APIRouter, this.main);
 
 		readdirSync(join(__dirname, "../Routes"))
 			.forEach(async (dir: string) => {
@@ -156,7 +148,7 @@ export default class App {
 
 	private _loadDocumentation() {
 		const DocsRouter = Router();
-		this.main.use("/docs", DocsRouter);
+
 		DocsRouter
 			.get("/", (req, res) => {
 				const categoryList = this.routes.map(route => route.category).filter((elem, pos, self) => self.indexOf(elem) === pos);
@@ -190,5 +182,7 @@ export default class App {
 				return this
 					.successResJSON(res, reqRoute);
 			});
+
+		Subdomain("docs", DocsRouter, this.main);
 	}
 };
