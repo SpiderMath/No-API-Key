@@ -7,16 +7,18 @@ import { Collection } from "../Packages/Collection";
 import { v4 } from "uuid";
 import { join } from "path";
 import Subdomain from "../Packages/Subdomain";
-import { stripIndents } from "common-tags";
+
 export default class App {
 	private main = express();
 	public logger = Logger;
 	private port: number;
 	public routes: Collection<string, RouteExport> = new Collection();
 	public adminKey: string = v4();
+	public baseURL: string = "";
 
 	constructor(port: number = 6969) {
 		this.port = port;
+		if(this.baseURL.length === 0) this.baseURL = `localhost:${this.port}`;
 
 		this.main.listen(this.port, () => this.logger.success("server", `Listening for API Calls on port: ${port}!`));
 
@@ -150,23 +152,5 @@ export default class App {
 		Subdomain("docs", DocsRouter);
 		this.main.use(DocsRouter);
 
-		const template = (route: RouteExport) => stripIndents`
-			<li>
-				<b>${`/${route.mainEndpoint}/${route.name}`}</b><br>
-				<b>Description:</b> ${route.description}<br>
-				<b>Type:</b> ${route.type || "get"}<br>
-				<b>Admin:</b> ${route.admin ? "✅" : "❌"}<br>
-			</li>
-		`;
-
-		DocsRouter
-			.get("/", (req, res) => {
-				const resp = this.routes.map(route => template(route));
-
-				res
-					.send(
-						resp.join("\n"),
-					);
-			});
 	}
 };
