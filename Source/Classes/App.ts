@@ -8,7 +8,7 @@ import { v4 } from "uuid";
 import { join } from "path";
 import { stripIndents } from "common-tags";
 import firstUppercase from "../Helpers/FirstUppercase";
-import Subdomain from "../Packages/Subdomain";
+
 export default class App {
 	private main = express();
 	public logger = Logger;
@@ -31,8 +31,6 @@ export default class App {
 
 	private _loadRoutes() {
 		const APIRouter = Router();
-
-		Subdomain("api", APIRouter, this.main);
 
 		readdirSync(join(__dirname, "../Routes"))
 			.forEach(async (dir: string) => {
@@ -118,6 +116,8 @@ export default class App {
 					this.logger.success("server/routes", `Loaded route /${endpointPath.toLowerCase()}/${pull.name.toLowerCase()} successfully!`);
 				}
 			});
+
+		this.main.use("/api", APIRouter);
 	}
 
 	public errorRes(res: Response, error: string, code: number = 400) {
@@ -183,6 +183,6 @@ export default class App {
 					.successResJSON(res, reqRoute);
 			});
 
-		Subdomain("docs", DocsRouter, this.main);
+		this.main.use("/docs", DocsRouter);
 	}
 };
