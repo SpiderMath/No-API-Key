@@ -4,7 +4,8 @@ import Logger from "../Helpers/Logger";
 export default class App {
 	public port: number;
 	private app = express();
-	public logger = Logger;
+	// @ts-ignore
+	public logger: Logger = new Logger().start();
 
 	constructor(port?: number) {
 		this.port = port || 6969;
