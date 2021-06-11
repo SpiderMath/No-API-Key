@@ -23,7 +23,9 @@ export default class Logger {
 
 	async start() {
 		if(!existsSync(join(__dirname, "../../Logs"))) await mkdir(join(__dirname, "../../Logs"));
+
 		if(!existsSync(join(__dirname, "../../Logs", "Logs.json"))) await writeFileSync(join(__dirname, "../../Logs/Logs.json"), JSON.stringify([]));
+		else await writeFileSync(join(__dirname, "../../Logs/Logs.json"), JSON.stringify([]));
 
 		return this;
 	}
