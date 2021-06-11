@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
-import { readFileSync } from "fs";
 import { EndpointConfig } from "../Types/RouterConfig";
 import App from "./App";
 
-export default abstract class BaseEndpoint {
+export default abstract class BaseRoute {
 	public app: App;
 	public name: string = "";
 	public description: string = "";
 	public adminOnly: boolean = false;
+	public category: string = "";
 
 	constructor(app: App, config: EndpointConfig) {
 		this.app = app;
@@ -28,10 +28,6 @@ export default abstract class BaseEndpoint {
 					writable: true,
 				},
 			);
-	}
-
-	loadJSON(path: string) {
-		return JSON.parse(readFileSync(path).toString());
 	}
 
 	// eslint-disable-next-line no-unused-vars
