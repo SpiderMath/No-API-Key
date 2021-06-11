@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { EndpointConfig } from "../Types/RouterConfig";
+import { EndpointConfig, Parameter } from "../Types/RouterConfig";
 import App from "./App";
 
 export default abstract class BaseRoute {
@@ -8,6 +8,7 @@ export default abstract class BaseRoute {
 	public description: string = "";
 	public adminOnly: boolean = false;
 	public category: string = "";
+	public parameters: Parameter[] = [];
 
 	constructor(app: App, config: EndpointConfig) {
 		this.app = app;
@@ -28,8 +29,17 @@ export default abstract class BaseRoute {
 					writable: true,
 				},
 			);
+
+		if(this.adminOnly) {
+			this.parameters.push({
+				name: "key",
+				description: "Admin Key mister, this is a developer only route",
+				required: true,
+				type: "string",
+			});
+		}
 	}
 
 	// eslint-disable-next-line no-unused-vars
-	abstract run(req: Request, res: Response): Promise<any>;
+	abstract run(req: Request, res: Response, params: object): Promise<any>;
 };

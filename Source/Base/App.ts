@@ -37,9 +37,67 @@ export default class App {
 
 				if(route.category !== category.toLowerCase()) return this.pageNotFound(res);
 
+				const object: object = {};
+
+				const params = route.parameters.filter(param => param.required);
+
+				for(const param of params) {
+					let val: any = req.query[param.name];
+
+					if(!val) return res.status(400).json({ error: true, message: `No value provided for ${param.name}` });
+
+					if(param.type === "number") {
+						val = Number(val);
+						if(!val) return res.status(400).json({ error: true, message: `Invalid number provided for ${param.name}`});
+
+						Object
+							.defineProperty(
+								object,
+								param.name,
+								{
+									configurable: true,
+									writable: true,
+									enumerable: false,
+									value: val,
+								},
+							);
+					}
+					else if(param.type === "boolean") {
+						if(["t", "true"].includes(val.toLowerCase())) val = true;
+						else if(["f", "false"].includes(val.toLowerCase())) val = false;
+						else return res.status(400).json({ error: true, message: `Invalid option provided for boolean parameter ${param.name}` });
+
+						Object
+							.defineProperty(
+								object,
+								param.name,
+								{
+									configurable: true,
+									writable: true,
+									enumerable: false,
+									value: val,
+								},
+							);
+					}
+					else {
+						Object
+							.defineProperty(
+								object,
+								param.name,
+								{
+									configurable: true,
+									writable: true,
+									enumerable: false,
+									value: val,
+								},
+							);
+					}
+				}
+
 				route
-					.run(req, res);
+					.run(req, res, object);
 			});
+
 		return APIRouter;
 	}
 
