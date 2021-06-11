@@ -48,7 +48,7 @@ export default class App {
 
 					if(param.type === "number") {
 						val = Number(val);
-						if(!val) return res.status(400).json({ error: true, message: `Invalid number provided for ${param.name}`});
+						if(!val) return res.status(400).json({ error: true, message: `Invalid number provided for ${param.name}` });
 
 						Object
 							.defineProperty(
