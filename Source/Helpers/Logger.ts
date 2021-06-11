@@ -12,7 +12,7 @@ export interface Log {
 }
 
 export default class Logger {
-	public logLocation: string = "";
+	public logLocation: string = join(__dirname, "../../Logs/Logs.json");
 	private ansiCodes = {
 		red : "\x1b[31m",
 		green : "\x1b[32m",

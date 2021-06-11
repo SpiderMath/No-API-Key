@@ -5,9 +5,10 @@ export default class App {
 	public port: number;
 	private app = express();
 	// @ts-ignore
-	public logger: Logger = new Logger().start();
+	public logger: Logger = new Logger();
 
 	constructor(port?: number) {
+		this.logger.start();
 		this.port = port || 6969;
 	}
 
