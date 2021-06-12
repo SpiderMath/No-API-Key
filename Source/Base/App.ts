@@ -159,7 +159,21 @@ export default class App {
 				for(const param of unreqedParams) {
 					let val: any = req.query[param.name];
 
-					if(!val) continue;
+					if(!val) {
+						Object
+							.defineProperty(
+								object,
+								param.name,
+								{
+									configurable: true,
+									writable: true,
+									enumerable: false,
+									value: param.default,
+								},
+							);
+
+						continue;
+					}
 
 					if(param.type === "number") {
 						val = Number(val);

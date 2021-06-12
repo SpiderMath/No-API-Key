@@ -10,6 +10,7 @@ interface Parameter {
 	description: string,
 	type: "boolean" | "string" | "number",
 	required: boolean,
+	default?: boolean | string | number,
 }
 
 export { EndpointConfig, Parameter };

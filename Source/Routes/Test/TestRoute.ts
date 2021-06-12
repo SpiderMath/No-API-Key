@@ -7,11 +7,20 @@ export default class TestRoute extends BaseRoute {
 		super(app, {
 			name: "test",
 			description: "This is a Test Endpoint",
-			adminOnly: true,
+			adminOnly: false,
+			parameters: [
+				{
+					name: "e",
+					description: "f",
+					required: false,
+					type: "string",
+					default: "Hi",
+				},
+			],
 		});
 	}
 
 	async run(req: Request, res: Response, obj: any) {
-		res.send(obj.something);
+		res.send(obj.e);
 	}
 }
