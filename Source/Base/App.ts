@@ -12,7 +12,6 @@ export default class App {
 	public logger: Logger = new Logger();
 	public routes = new RouteManager();
 	public baseURL: string = "";
-	public otherCall: boolean = false;
 
 	constructor(port?: number) {
 		this.logger.start();
@@ -26,15 +25,8 @@ export default class App {
 		const APIRouter = await this.APIRouter();
 		const DocsRouter = await this.DocsRouter();
 
-		this.app.use(APIRouter);
-		this.app.use(DocsRouter);
-
-		this.app.use((req, res, next) => {
-			const subdomain = req.subdomains[0];
-			if(!subdomain) return res.redirect(`http://docs.${this.baseURL}/`);
-
-			next();
-		});
+		this.app.use("/api", APIRouter);
+		this.app.use("/docs", DocsRouter);
 	}
 
 	async loadEndpoints() {
@@ -74,15 +66,7 @@ export default class App {
 		const APIRouter = Router();
 
 		APIRouter
-			.get("/:cat/:endpoint", (req, res, next) => {
-				const subdomain = req.subdomains[0];
-				console.log(subdomain);
-				if(!subdomain || subdomain !== "api") {
-					console.log("I'm running");
-					this.otherCall = true;
-					return next();
-				}
-
+			.get("/:cat/:endpoint", (req, res) => {
 				const endpoint = req.params.endpoint;
 				const category = req.params.cat;
 
@@ -207,28 +191,23 @@ export default class App {
 			});
 
 		APIRouter
-			.use((req: Request, res: Response, next) => {
-				if(!this.otherCall) return this.pageNotFound(res);
-				console.log("Remember me?");
-
-				this.otherCall = false;
-				next();
-			});
+			.use((req: Request, res: Response) => this.pageNotFound(res));
 
 		return APIRouter;
 	}
 
 	public DocsRouter() {
 		const DocsRouter = Router();
+		const categories: string[] = [];
+
+		this.routes.cache
+			.map(c => c.category)
+			.forEach(c => {
+				if(!categories.includes(c)) categories.push(c);
+			});
 
 		DocsRouter
-			.get("/:cat/:endpoint", (req, res, next) => {
-				const subdomain = req.subdomains[0];
-				if(!subdomain || subdomain !== "docs") {
-					this.otherCall = true;
-					next();
-				}
-
+			.get("/:cat/:endpoint", (req, res) => {
 				const endpoint = req.params.endpoint;
 				const category = req.params.cat;
 
@@ -245,39 +224,32 @@ export default class App {
 			});
 
 		DocsRouter
-			.get("/", (req, res, next) => {
-				if(this.otherCall) next();
-
-				const subdomain = req.subdomains[0];
-				if(!subdomain) next();
-				if(subdomain !== "docs") {
-					this.otherCall = true;
-					next();
-				}
-
-				const response: string[] = [];
-
-				this.routes.cache
-					.map(c => c.category)
-					.forEach(c => {
-						if(!response.includes(c)) response.push(c);
-					});
-
+			.get("/", (req, res) => {
 				res
 					.status(200)
 					.json(
-						response,
+						categories,
 					);
 			});
 
 		DocsRouter
-			.use((req: Request, res: Response, next) => {
-				console.log("Did you call me?");
-				if(!this.otherCall) return this.pageNotFound(res);
+			.get("/:cat", (req, res) => {
+				const category = req.params.cat;
 
-				this.otherCall = false;
-				next();
+				if(!categories.includes(category)) return res.status(400).send({ error: true, message: "Invalid category provided" });
+
+				const resp: any = {};
+
+				this.routes.cache.filter(r => r.category.toLowerCase() === category.toLowerCase()).map(route => resp[route.name] = route);
+
+				res
+					.status(200)
+					.json(
+						resp,
+					);
 			});
+		DocsRouter
+			.use((req: Request, res: Response) => this.pageNotFound(res));
 
 		return DocsRouter;
 	}
