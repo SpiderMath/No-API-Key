@@ -25,6 +25,8 @@ export default class App {
 		const APIRouter = await this.APIRouter();
 		const DocsRouter = await this.DocsRouter();
 
+		this.app.get("/", (req, res) => res.redirect("/docs"));
+
 		this.app.use("/api", APIRouter);
 		this.app.use("/docs", DocsRouter);
 	}
@@ -59,6 +61,15 @@ export default class App {
 			.json({
 				error: true,
 				message: "Page not found",
+			});
+	}
+
+	public badRequest(res: Response, message: string) {
+		res
+			.status(400)
+			.json({
+				error: true,
+				message,
 			});
 	}
 
