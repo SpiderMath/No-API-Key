@@ -7,15 +7,7 @@ export default class TestRoute extends BaseRoute {
 		super(app, {
 			name: "test",
 			description: "This is a Test Endpoint",
-			adminOnly: false,
-			parameters: [
-				{
-					name: "something",
-					required: true,
-					description: "Something",
-					type: "string",
-				},
-			],
+			adminOnly: true,
 		});
 	}
 

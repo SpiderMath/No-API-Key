@@ -1,10 +1,11 @@
 import express, { Request, Response, Router } from "express";
-import { readdir } from "fs/promises";
+import { readdir, writeFile } from "fs/promises";
 import { join } from "path";
 import Logger from "../Helpers/Logger";
 import RouteManager from "./RouteManager";
 import BaseRoute from "./BaseRoute";
 import { readFileSync } from "fs";
+import { v4 as uuid } from "uuid";
 
 export default class App {
 	public port: number;
@@ -12,6 +13,7 @@ export default class App {
 	public logger: Logger = new Logger();
 	public routes = new RouteManager();
 	public baseURL: string = "";
+	public adminKey = uuid();
 
 	constructor(port?: number) {
 		this.logger.start();
@@ -25,6 +27,7 @@ export default class App {
 		const APIRouter = await this.APIRouter();
 		const DocsRouter = await this.DocsRouter();
 
+		await writeFile(".env", `TOKEN=${this.adminKey}`);
 		this.app.get("/", (req, res) => res.redirect("/docs"));
 
 		this.app.use("/api", APIRouter);
