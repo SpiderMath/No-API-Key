@@ -1,4 +1,4 @@
-import express, { Response, Router } from "express";
+import express, { Request, Response, Router } from "express";
 import { readdir } from "fs/promises";
 import { join } from "path";
 import Logger from "../Helpers/Logger";
@@ -150,6 +150,16 @@ export default class App {
 				}
 				route
 					.run(req, res, object);
+			});
+
+		APIRouter
+			.use((req: Request, res: Response) => {
+				res
+					.status(404)
+					.json({
+						error: true,
+						message: "Endpoint not found",
+					});
 			});
 
 		return APIRouter;
