@@ -132,6 +132,14 @@ export default class App {
 							);
 					}
 					else {
+						if(param.name === "key" && val !== this.adminKey) {
+							return this
+								.badRequest(
+									res,
+									"Invalid key provided",
+								);
+						}
+
 						Object
 							.defineProperty(
 								object,
