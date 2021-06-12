@@ -11,24 +11,77 @@ export default class App {
 	private app = express();
 	public logger: Logger = new Logger();
 	public routes = new RouteManager();
+	public baseURL: string = "";
+	public docsCall: boolean = false;
 
 	constructor(port?: number) {
 		this.logger.start();
 		this.port = port || 6969;
+		this.baseURL = `example.com:${this.port}`;
 	}
 
 	async start() {
 		this.app.listen(this.port, () => this.logger.success("app/server", `Listening for API Calls on port: ${this.port}`));
 		await this.loadEndpoints();
 		const APIRouter = await this.APIRouter();
+		const DocsRouter = await this.DocsRouter();
+
 		this.app.use(APIRouter);
+		this.app.use(DocsRouter);
+
+		this.app.use((req, res, next) => {
+			const subdomain = req.subdomains[0];
+			if(!subdomain) return res.redirect(`http://docs.${this.baseURL}/`);
+
+			next();
+		});
+	}
+
+	async loadEndpoints() {
+		const subDirs = await readdir(join(__dirname, "../Routes"));
+		const RouteMap = this.loadJSON(join(__dirname, "../../Assets/JSON/RouteMap.json"));
+
+		for(const subDir of subDirs) {
+			const files = await readdir(join(__dirname, "../Routes", subDir));
+			this.logger.info("server/routes", `Loading sub directory ${subDir}`);
+
+			for(const file of files) {
+				const pseudoPull = await import(join(__dirname, "../Routes", subDir, file));
+				const pull = new pseudoPull.default(this) as BaseRoute;
+
+				pull.category = RouteMap[subDir.toLowerCase()] || subDir.toLowerCase();
+
+				this.routes.register(pull.name, pull);
+				this.logger.success("server/routes", `Loaded route ${pull.name}`);
+			}
+		}
+	}
+
+	public loadJSON(path: string) {
+		return JSON.parse(readFileSync(path).toString());
+	}
+
+	public pageNotFound(res: Response) {
+		res
+			.status(404)
+			.json({
+				error: true,
+				message: "Page not found",
+			});
 	}
 
 	async APIRouter(): Promise<Router> {
 		const APIRouter = Router();
 
 		APIRouter
-			.get("/:cat/:endpoint", (req, res) => {
+			.get("/:cat/:endpoint", (req, res, next) => {
+				const subdomain = req.subdomains[0];
+				if(!subdomain) next();
+				if(subdomain === "docs") {
+					this.docsCall = true;
+					next();
+				}
+
 				const endpoint = req.params.endpoint;
 				const category = req.params.cat;
 
@@ -153,48 +206,39 @@ export default class App {
 			});
 
 		APIRouter
-			.use((req: Request, res: Response) => {
-				res
-					.status(404)
-					.json({
-						error: true,
-						message: "Endpoint not found",
-					});
+			.use((req: Request, res: Response, next) => {
+				if(!this.docsCall) return this.pageNotFound(res);
+
+				this.docsCall = false;
+				next();
 			});
 
 		return APIRouter;
 	}
 
-	async loadEndpoints() {
-		const subDirs = await readdir(join(__dirname, "../Routes"));
-		const RouteMap = this.loadJSON(join(__dirname, "../../Assets/JSON/RouteMap.json"));
+	public DocsRouter() {
+		const DocsRouter = Router();
 
-		for(const subDir of subDirs) {
-			const files = await readdir(join(__dirname, "../Routes", subDir));
-			this.logger.info("server/routes", `Loading sub directory ${subDir}`);
+		DocsRouter
+			.get("/:cat/:endpoint", (req, res) => {
+				const endpoint = req.params.endpoint;
+				const category = req.params.cat;
 
-			for(const file of files) {
-				const pseudoPull = await import(join(__dirname, "../Routes", subDir, file));
-				const pull = new pseudoPull.default(this) as BaseRoute;
+				const route = this.routes.get(endpoint.toLowerCase());
+				if(!route) return this.pageNotFound(res);
 
-				pull.category = RouteMap[subDir.toLowerCase()] || subDir.toLowerCase();
+				if(route.category !== category.toLowerCase()) return this.pageNotFound(res);
 
-				this.routes.register(pull.name, pull);
-				this.logger.success("server/routes", `Loaded route ${pull.name}`);
-			}
-		}
-	}
-
-	public loadJSON(path: string) {
-		return JSON.parse(readFileSync(path).toString());
-	}
-
-	public pageNotFound(res: Response) {
-		res
-			.status(404)
-			.json({
-				error: true,
-				message: "Page not found",
+				res
+					.status(200)
+					.json(
+						route,
+					);
 			});
+
+		DocsRouter
+			.use((req: Request, res: Response) => this.pageNotFound(res));
+
+		return DocsRouter;
 	}
 };
