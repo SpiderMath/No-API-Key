@@ -12,7 +12,7 @@ export default class App {
 	public logger: Logger = new Logger();
 	public routes = new RouteManager();
 	public baseURL: string = "";
-	public docsCall: boolean = false;
+	public otherCall: boolean = false;
 
 	constructor(port?: number) {
 		this.logger.start();
@@ -76,10 +76,11 @@ export default class App {
 		APIRouter
 			.get("/:cat/:endpoint", (req, res, next) => {
 				const subdomain = req.subdomains[0];
-				if(!subdomain) next();
-				if(subdomain === "docs") {
-					this.docsCall = true;
-					next();
+				console.log(subdomain);
+				if(!subdomain || subdomain !== "api") {
+					console.log("I'm running");
+					this.otherCall = true;
+					return next();
 				}
 
 				const endpoint = req.params.endpoint;
@@ -207,9 +208,10 @@ export default class App {
 
 		APIRouter
 			.use((req: Request, res: Response, next) => {
-				if(!this.docsCall) return this.pageNotFound(res);
+				if(!this.otherCall) return this.pageNotFound(res);
+				console.log("Remember me?");
 
-				this.docsCall = false;
+				this.otherCall = false;
 				next();
 			});
 
@@ -220,7 +222,13 @@ export default class App {
 		const DocsRouter = Router();
 
 		DocsRouter
-			.get("/:cat/:endpoint", (req, res) => {
+			.get("/:cat/:endpoint", (req, res, next) => {
+				const subdomain = req.subdomains[0];
+				if(!subdomain || subdomain !== "docs") {
+					this.otherCall = true;
+					next();
+				}
+
 				const endpoint = req.params.endpoint;
 				const category = req.params.cat;
 
@@ -237,7 +245,39 @@ export default class App {
 			});
 
 		DocsRouter
-			.use((req: Request, res: Response) => this.pageNotFound(res));
+			.get("/", (req, res, next) => {
+				if(this.otherCall) next();
+
+				const subdomain = req.subdomains[0];
+				if(!subdomain) next();
+				if(subdomain !== "docs") {
+					this.otherCall = true;
+					next();
+				}
+
+				const response: string[] = [];
+
+				this.routes.cache
+					.map(c => c.category)
+					.forEach(c => {
+						if(!response.includes(c)) response.push(c);
+					});
+
+				res
+					.status(200)
+					.json(
+						response,
+					);
+			});
+
+		DocsRouter
+			.use((req: Request, res: Response, next) => {
+				console.log("Did you call me?");
+				if(!this.otherCall) return this.pageNotFound(res);
+
+				this.otherCall = false;
+				next();
+			});
 
 		return DocsRouter;
 	}

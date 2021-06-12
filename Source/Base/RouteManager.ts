@@ -1,7 +1,8 @@
+import Collection from "@discordjs/collection";
 import BaseRoute from "./BaseRoute";
 
 export default class RouteManager {
-	public cache: Map<string, BaseRoute> = new Map();
+	public cache: Collection<string, BaseRoute> = new Collection();
 
 	register(name: string, endpoint: BaseRoute) {
 		this.cache.set(name.toLowerCase(), endpoint);
