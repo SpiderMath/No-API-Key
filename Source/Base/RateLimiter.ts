@@ -19,18 +19,13 @@ export default class RateLimitManager {
 	public async rateLimiter(req: Request, res: Response, next: NextFunction) {
 		const ip = req.header("x-forwarded-for") || req.socket.remoteAddress;
 
-		// @ts-ignore
-		let numberOfRequests = this.rateLimitCache.get(ip);
-		if(!numberOfRequests) {
-			// @ts-ignore
-			this.rateLimitCache.set(ip, 1);
-			numberOfRequests = 1;
-		}
-		else {
-			// @ts-ignore
-			this.rateLimitCache.set(ip, numberOfRequests + 1);
-		}
+		let numberOfRequests;
 
+		// @ts-ignore
+		if(this.rateLimitCache.get(ip)) numberOfRequests = this.rateLimitCache.get(ip) + 1;
+		else numberOfRequests = 1;
+
+		// @ts-ignore
 		if(numberOfRequests > this.throttle) {
 			return res
 				.status(429)
@@ -39,6 +34,9 @@ export default class RateLimitManager {
 					message: "Too many requests!",
 				});
 		}
+
+		// @ts-ignore
+		this.rateLimitCache.set(ip, numberOfRequests);
 
 		next();
 	}
