@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "Making A Free No-API-Key service is my dream",
   "scripts": {
-    "dev": "npx ts-node-dev ./Source/Server.ts"
+    "dev": "npx ts-node-dev ./Source/Server.ts",
+    "preinstall": "npx tsc",
+    "start": "node ./Dist/Server.js"
   },
   "repository": {
     "type": "git",
