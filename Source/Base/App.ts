@@ -1,4 +1,4 @@
-import express, { NextFunction, Request, Response, Router } from "express";
+import express, { Request, Response, Router } from "express";
 import { readdir, writeFile } from "fs/promises";
 import { join } from "path";
 import Logger from "../Helpers/Logger";
@@ -6,7 +6,7 @@ import RouteManager from "./RouteManager";
 import BaseRoute from "./BaseRoute";
 import { readFileSync } from "fs";
 import { v4 as uuid } from "uuid";
-import Collection from "@discordjs/collection";
+import RateLimitManager from "./RateLimiter";
 
 export default class App {
 	public port: number;
@@ -15,17 +15,20 @@ export default class App {
 	public routes = new RouteManager();
 	public baseURL: string = "";
 	public adminKey = uuid();
-	public rateLimitCache: Collection<string, number> = new Collection();
+	public rateLimit: RateLimitManager;
 
 	constructor(port?: number) {
 		this.logger.start();
 		this.port = port || 6969;
 		this.baseURL = `example.com:${this.port}`;
+		this.rateLimit = new RateLimitManager(this, {
+			throttle: 10,
+			cacheClear: 2 * 60 * 1000,
+		});
 	}
 
 	async start() {
 		this.app.listen(this.port, () => this.logger.success("app/server", `Listening for API Calls on port: ${this.port}`));
-		setInterval(() => this.rateLimitCache.clear(), 1000);
 
 		await this.loadEndpoints();
 		const APIRouter = await this.APIRouter();
@@ -34,9 +37,7 @@ export default class App {
 		await writeFile(".env", `TOKEN=${this.adminKey}`);
 		this.app.get("/", (req, res) => res.redirect("/docs"));
 
-		this.app.use("/api", async (req, res, next) => await this.RateLimit(req, res, next, {
-			requestsPerMinute: 10,
-		}));
+		this.app.use("/api", async (...args) => await this.rateLimit.rateLimiter(...args));
 
 		this.app.use("/api", APIRouter);
 		this.app.use("/docs", DocsRouter);
@@ -82,33 +83,6 @@ export default class App {
 				error: true,
 				message,
 			});
-	}
-
-	async RateLimit(req: Request, res: Response, next: NextFunction, options: { requestsPerMinute: number }) {
-		const ip = req.header("x-forwarded-for") || req.socket.remoteAddress;
-
-		// @ts-ignore
-		let numberOfRequests = this.rateLimitCache.get(ip);
-		if(!numberOfRequests) {
-			// @ts-ignore
-			this.rateLimitCache.set(ip, 1);
-			numberOfRequests = 1;
-		}
-		else {
-			// @ts-ignore
-			this.rateLimitCache.set(ip, numberOfRequests + 1);
-		}
-
-		if(numberOfRequests > options.requestsPerMinute) {
-			return res
-				.status(429)
-				.json({
-					error: true,
-					message: "Too many requests!",
-				});
-		}
-
-		next();
 	}
 
 	async APIRouter(): Promise<Router> {
