@@ -5,13 +5,22 @@ interface RouteConfig {
 	name: string,
 	description: string,
 	adminOnly?: boolean,
+	parameters?: Parameter[],
 };
+
+interface Parameter {
+	name: string,
+	required?: boolean,
+	description: string,
+	msg?: string,
+}
 
 export default abstract class BaseRoute {
 	public name: string = "";
 	public description: string = "";
 	public app: App;
 	public adminOnly: boolean = false;
+	public parameters: Parameter[] = [];
 
 	constructor(app: App, config: RouteConfig) {
 		this.app = app;
