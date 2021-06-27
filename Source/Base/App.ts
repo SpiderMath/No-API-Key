@@ -4,18 +4,20 @@ import { join } from "path";
 import BaseRoute from "./BaseRoute";
 import Util from "../Helpers/Util";
 import { v4 } from "uuid";
+import Logger from "../Helpers/Logger";
 
 export class App {
 	public main = express();
 	public util = new Util();
 	public adminKey = v4();
+	public logger = new Logger();
 
 	async start(config: {
 		routesDir: string,
 	}) {
 		const PORT = process.env.PORT || 1010;
 
-		this.main.listen(PORT, () => console.log(`Listening for API calls on port ${PORT}`));
+		this.main.listen(PORT, () => this.logger.success("server", `Listening for API calls on port ${PORT}`));
 		await appendFile(join(__dirname, "../../.env"), `\nKEY=${this.adminKey}`);
 		await this._loadRoutes(config.routesDir);
 	}
@@ -37,7 +39,7 @@ export class App {
 					pull.run(req, res, next);
 				});
 
-				console.info(`Loaded command ${pull.name}`);
+				this.logger.success("server/routes", `Loaded Route /${subDir.toLowerCase()}/${pull.name} successfully!`);
 			}
 		}
 	}
