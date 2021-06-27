@@ -5,14 +5,14 @@ import BaseRoute from "./BaseRoute";
 import Util from "../Helpers/Util";
 import { v4 } from "uuid";
 import Logger from "../Helpers/Logger";
-import { Collection } from "@discordjs/collection";
+import SuperMap from "./SuperMap";
 
 export class App {
 	public main = express();
 	public util = new Util();
 	public adminKey = v4();
 	public logger = new Logger();
-	private routeCache: Collection<string, BaseRoute> = new Collection();
+	private routeCache: SuperMap<string, BaseRoute> = new SuperMap();
 
 	async start(config: {
 		routesDir: string,
@@ -22,6 +22,7 @@ export class App {
 		this.main.listen(PORT, () => this.logger.success("server", `Listening for API calls on port ${PORT}`));
 		await appendFile(join(__dirname, "../../.env"), `\nKEY=${this.adminKey}`);
 		await this._loadRoutes(config.routesDir);
+		await this._loadDocs();
 	}
 
 	async _loadRoutes(routesDir: string) {
@@ -51,5 +52,24 @@ export class App {
 		}
 
 		this.main.use("/api", APIRouter);
+	}
+
+	async _loadDocs() {
+		const DocsRouter = Router();
+		const categories = [...new Set(this.routeCache.map(route => route.category))];
+
+		DocsRouter.get("/:cat/:route", (req, res) => {
+			const category = req.params.cat;
+			if(!categories.includes(category.toLowerCase())) return this.util.badRequest(res, "Invalid category");
+
+			const routes = this.routeCache.filter(route => route.category === category.toLowerCase());
+			const route = routes.get(req.params.route);
+
+			if(!route) return this.util.badRequest(res, "Page not found");
+
+			this.util.successJSON(res, route);
+		});
+
+		this.main.use("/docs", DocsRouter);
 	}
 };
