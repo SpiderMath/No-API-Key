@@ -67,7 +67,13 @@ export class App {
 
 			if(!route) return this.util.badRequest(res, "Page not found");
 
-			this.util.successJSON(res, route);
+			this.util.successJSON(res, {
+				name: route.name,
+				description: route.description,
+				parameters: route.parameters,
+				subRouteOf: route.category,
+				adminOnly: route.adminOnly,
+			});
 		});
 
 		this.main.use("/docs", DocsRouter);
