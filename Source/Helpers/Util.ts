@@ -1,4 +1,5 @@
 import { Response } from "express";
+import { readFile } from "fs/promises";
 
 export default class Util {
 	successJSON(res: Response, json: object) {
@@ -24,5 +25,11 @@ export default class Util {
 			.set({ "Content-Type": mime })
 			.status(200)
 			.send(buffer);
+	}
+
+	async readJSON(path: string) {
+		const buffer = await readFile(path);
+
+		return JSON.parse(buffer.toString());
 	}
 };

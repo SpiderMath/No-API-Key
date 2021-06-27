@@ -24,6 +24,7 @@ export class App {
 
 	async _loadRoutes(routesDir: string) {
 		const subDirs = await readdir(routesDir);
+		const subRouteList: any = await this.util.readJSON(join(__dirname, "../../Assets/JSON/APISubroutes.json"));
 
 		for(const subDir of subDirs) {
 			const files = await readdir(join(routesDir, subDir));
@@ -32,14 +33,15 @@ export class App {
 				const pseudoPull = await import(join(routesDir, subDir, file));
 
 				const pull: BaseRoute = new pseudoPull.default(this);
+				const APISubRoute = subRouteList[subDir.toLowerCase()] || subDir.toLowerCase();
 
-				this.main.get(`/${subDir.toLowerCase()}/${pull.name}`, async (req, res, next) => {
+				this.main.get(`/${APISubRoute}/${pull.name}`, async (req, res, next) => {
 					if(pull.adminOnly && (!req.query.key || req.query.key !== this.adminKey)) return this.util.badRequest(res, "This is an admin only endpoint!");
 
 					pull.run(req, res, next);
 				});
 
-				this.logger.success("server/routes", `Loaded Route /${subDir.toLowerCase()}/${pull.name} successfully!`);
+				this.logger.success("server/routes", `Loaded Route /${APISubRoute}/${pull.name} successfully!`);
 			}
 		}
 	}
