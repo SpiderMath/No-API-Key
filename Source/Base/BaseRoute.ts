@@ -21,6 +21,7 @@ export default abstract class BaseRoute {
 	public app: App;
 	public adminOnly: boolean = false;
 	public parameters: Parameter[] = [];
+	public category: string = "";
 
 	constructor(app: App, config: RouteConfig) {
 		this.app = app;

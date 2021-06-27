@@ -5,12 +5,14 @@ import BaseRoute from "./BaseRoute";
 import Util from "../Helpers/Util";
 import { v4 } from "uuid";
 import Logger from "../Helpers/Logger";
+import { Collection } from "@discordjs/collection";
 
 export class App {
 	public main = express();
 	public util = new Util();
 	public adminKey = v4();
 	public logger = new Logger();
+	private routeCache: Collection<string, BaseRoute> = new Collection();
 
 	async start(config: {
 		routesDir: string,
@@ -35,6 +37,7 @@ export class App {
 
 				const pull: BaseRoute = new pseudoPull.default(this);
 				const APISubRoute = subRouteList[subDir.toLowerCase()] || subDir.toLowerCase();
+				pull.category = APISubRoute;
 
 				APIRouter.get(`/${APISubRoute}/${pull.name}`, async (req, res, next) => {
 					if(pull.adminOnly && (!req.query.key || req.query.key !== this.adminKey)) return this.util.badRequest(res, "This is an admin only endpoint!");
@@ -42,6 +45,7 @@ export class App {
 					pull.run(req, res, next);
 				});
 
+				this.routeCache.set(pull.name, pull);
 				this.logger.success("server/routes", `Loaded Route /${APISubRoute}/${pull.name} successfully!`);
 			}
 		}
